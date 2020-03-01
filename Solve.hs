@@ -42,18 +42,30 @@ sameCellNumber (Orixo wm ic) = let
 
 --------------------------------------------------
 
-linesFrom :: Orixo -> Cell -> S.Set Cell
-linesFrom o@(Orixo wm ic) c = S.unions $ map (uncurry (lineFrom o)) $ zip (repeat c) [U,D,L,R]
+linesFrom :: Orixo -> Cell -> M.Map Direction (S.Set Cell)
+linesFrom o@(Orixo wm ic) c = M.fromList $ zip dirs $ map (uncurry (lineFrom o)) $ zip (repeat c) dirs
+    where
+        dirs = [U,D,L,R]
 
 lineFrom :: Orixo -> Cell -> Direction -> S.Set Cell
 lineFrom (Orixo wm ic) c@(x,y) d 
-    | d `elem` [U, D] = S.fromList $ (\lx -> if L.null lx then [] else head lx) $ filter (c `elem`) $ chunks $ S.toList $ S.filter ((==x) . fst) wm
-    | d `elem` [L, R] = S.fromList $ (\lx -> if L.null lx then [] else head lx) $ filter (c `elem`) $ chunks $ S.toList $ S.filter ((==y) . snd) wm
+    = S.fromList 
+    $ (\lx -> if L.null lx then [] else head lx) 
+    $ filter (or . map (neighbor c)) 
+    $ chunks 
+    $ S.toList 
+    $ special_filter wm
+    where
+        special_filter = S.filter (case d of
+            U -> (\(x',y') -> x'==x && y'>y)
+            D -> (\(x',y') -> x'==x && y'<y)
+            R -> (\(x',y') -> y'==y && x'>x)
+            L -> (\(x',y') -> y'==y && x'<x))
 
-dependencies :: Orixo -> M.Map Cell (S.Set Cell)
+dependencies :: Orixo -> M.Map Cell (M.Map Direction (S.Set Cell))
 dependencies o@(Orixo wm ic) = S.foldl' 
-    (\mclc c -> M.update (const $ Just $ (S.\\ S.singleton c) $ linesFrom o c) c mclc) 
-    (M.fromList $ (`zip` repeat S.empty) $ M.keys ic) 
+    (\mclc c -> M.update (const $ Just $ linesFrom o c) c mclc) 
+    (M.fromList $ (`zip` repeat M.empty) $ M.keys ic) 
     wm
 
 --------------------------------------------------
