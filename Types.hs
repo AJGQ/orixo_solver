@@ -18,7 +18,32 @@ empty_cells (Orixo wm ic) = wm S.\\ (M.keysSet ic)
 data Direction = R | L | U | D
     deriving (Show, Eq, Ord)
 
-type Solution = M.Map Cell Direction
+type Solution = [(Cell, Direction)]
 
+{-
+ - 2##
+ -}
+ex_1_1 :: Orixo
+ex_1_1 = Orixo (S.fromList [(0,0), (1,0), (2,0)]) $ M.fromList [((0,0), 2)]
+
+{-  
+ -  1
+ - 2##
+ -  #
+ -}
+ex_1_2 :: Orixo
+ex_1_2 = Orixo (S.fromList [(1,0), (0,1), (1,1), (2,1), (1,2)]) $ M.fromList [((0,1), 2), ((1,2),1)]
+
+{- 
+ - 1##
+ -  1
+ -}
 ex1 :: Orixo
 ex1 = Orixo (S.fromList [(0,1), (1,0), (1,1), (2,1)]) $ M.fromList [((0,1), 1), ((1,0), 1)]
+
+{- 
+ -  11
+ - 1###
+ -}
+ex2 :: Orixo
+ex2 = Orixo (S.fromList [(0,0), (1,0), (2,0), (3,0), (1,1), (2,1)]) $ M.fromList [((0,0), 1), ((1,1), 1), ((2,1), 1)]

@@ -48,8 +48,9 @@ linesFrom o@(Orixo wm ic) c = M.fromList $ zip dirs $ map (uncurry (lineFrom o))
         dirs = [U,D,L,R]
 
 lineFrom :: Orixo -> Cell -> Direction -> S.Set Cell
-lineFrom (Orixo wm ic) c@(x,y) d 
-    = S.fromList 
+lineFrom o@(Orixo wm ic) c@(x,y) d 
+    = S.intersection (empty_cells o)
+    $ S.fromList 
     $ (\lx -> if L.null lx then [] else head lx) 
     $ filter (or . map (neighbor c)) 
     $ chunks 
@@ -70,6 +71,15 @@ dependencies o@(Orixo wm ic) = S.foldl'
 
 --------------------------------------------------
 
+single_dependent :: Orixo -> M.Map Cell (M.Map Direction (S.Set Cell))
+single_dependent o = let
+    deps = dependencies o
+    in
+    undefined
+    
+
+--------------------------------------------------
+
 solve :: Orixo -> Maybe Solution
 solve o@(Orixo wm ic) 
     | and $ map ($ o) filters = solve_chunk o
@@ -79,4 +89,3 @@ solve o@(Orixo wm ic)
 
 solve_chunk :: Orixo -> Maybe Solution
 solve_chunk (Orixo wm ic) = undefined
-
