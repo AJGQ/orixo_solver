@@ -8,7 +8,7 @@ import Types
 
 --------------------------------------------------
 inputInMap :: Orixo -> Bool
-inputInMap (Orixo wm ic) =
+inputInMap (Orixo wm ic oc) =
     let inputs = M.keysSet ic
      in (== inputs) $ S.intersection wm inputs
 
@@ -35,19 +35,20 @@ isChunk = (<= 1) . length . chunks . S.toList . world_map
 
 --------------------------------------------------
 sameCellNumber :: Orixo -> Bool
-sameCellNumber (Orixo wm ic) =
+sameCellNumber (Orixo wm ic oc) =
     let map_cell_number = length wm
         input_cell_number = M.size ic + sum (map snd $ M.toList ic)
      in map_cell_number == input_cell_number
 
 --------------------------------------------------
+-- Orixo changed
 linesFrom :: Orixo -> Cell -> M.Map Direction (S.Set Cell)
-linesFrom o@(Orixo wm ic) c = M.fromList $ zip dirs $ map (lineFrom o c) dirs
+linesFrom o@(Orixo wm ic oc) c = M.fromList $ zip dirs $ map (lineFrom o c) dirs
   where
     dirs = [U, D, L, R]
 
 lineFrom :: Orixo -> Cell -> Direction -> S.Set Cell
-lineFrom o@(Orixo wm ic) c@(x, y) d =
+lineFrom o@(Orixo wm ic oc) c@(x, y) d =
     S.intersection (empty_cells o) $
     S.fromList $
     (\lx ->
@@ -65,13 +66,14 @@ lineFrom o@(Orixo wm ic) c@(x, y) d =
                  L -> \(x', y') -> y' == y && x' < x)
 
 dependencies :: Orixo -> M.Map Cell (M.Map Direction (S.Set Cell))
-dependencies o@(Orixo wm ic) =
+dependencies o@(Orixo wm ic oc) =
     S.foldl'
         (\mclc c -> M.update (const $ Just $ linesFrom o c) c mclc)
         (M.fromList $ (`zip` repeat M.empty) $ M.keys ic)
         wm
 
 --------------------------------------------------
+-- Orixo changed
 all_cells :: M.Map Cell (M.Map Direction (S.Set Cell)) -> S.Set Cell
 all_cells = S.unions . M.map (\m -> S.unions $ S.map (m M.!) $ M.keysSet m)
 
@@ -97,8 +99,9 @@ single_dependent o =
             deps
 
 --------------------------------------------------
+-- Orixo changed
 obligated_finder :: Orixo -> M.Map Cell (Maybe Direction)
-obligated_finder o@(Orixo _ ic) =
+obligated_finder o@(Orixo _ ic oc) =
     let deps = dependencies o
         volume = (ic M.!)
      in M.mapWithKey
@@ -112,8 +115,9 @@ obligated_finder o@(Orixo _ ic) =
             deps
 
 --------------------------------------------------
+-- Orixo changed
 discovered_finder :: Orixo -> M.Map Cell (Maybe Direction)
-discovered_finder o@(Orixo _ ic) =
+discovered_finder o@(Orixo _ ic oc) =
     let mcds = single_dependent o
         volume = (ic M.!)
      in M.mapWithKey
@@ -124,6 +128,7 @@ discovered_finder o@(Orixo _ ic) =
             mcds
 
 --------------------------------------------------
+-- Orixo changed
 two_sided_impossibility_finder :: Orixo -> S.Set Cell
 two_sided_impossibility_finder o =
     let deps = dependencies o
@@ -139,8 +144,9 @@ two_sided_impossibility_finder o =
         deps
 
 --------------------------------------------------
+-- Orixo changed
 no_options :: Orixo -> S.Set Cell
-no_options o@(Orixo _ ic) =
+no_options o@(Orixo _ ic oc) =
     let deps = dependencies o
      in M.keysSet .
         M.filter M.null .
@@ -160,11 +166,11 @@ no_options o@(Orixo _ ic) =
 -- no_options : it's impossible to slide the starter in any direction (DONE)
 -- 
 solve :: Orixo -> Maybe Solution
-solve o@(Orixo wm ic)
+solve o@(Orixo wm ic oc)
     | all ($ o) filters = solveChunk o
     | otherwise = Nothing
   where
     filters = [inputInMap, isChunk, sameCellNumber]
 
 solveChunk :: Orixo -> Maybe Solution
-solveChunk (Orixo wm ic) = undefined
+solveChunk (Orixo wm ic oc) = undefined
