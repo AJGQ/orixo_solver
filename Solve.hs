@@ -2,6 +2,7 @@ module Solve where
 
 import qualified Data.List as L
 import qualified Data.Map as M
+import qualified Data.Maybe as Mb
 import qualified Data.Set as S
 import Types
 
@@ -41,7 +42,7 @@ sameCellNumber (Orixo wm ic) =
 
 --------------------------------------------------
 linesFrom :: Orixo -> Cell -> M.Map Direction (S.Set Cell)
-linesFrom o@(Orixo wm ic) c = M.fromList $ zip dirs $ map ((lineFrom o) c) dirs
+linesFrom o@(Orixo wm ic) c = M.fromList $ zip dirs $ map (lineFrom o c) dirs
   where
     dirs = [U, D, L, R]
 
@@ -91,8 +92,8 @@ single_dependent o =
             (\k a ->
                  (\sc ->
                       let Just d = find_direction k sc
-                       in (d, sc)) $
-                 (all_cells (M.fromList [(k, a)]) S.\\ all_cells (no_key k)))
+                       in (d, sc))
+                     (all_cells (M.fromList [(k, a)]) S.\\ all_cells (no_key k)))
             deps
 
 --------------------------------------------------
@@ -131,16 +132,16 @@ two_sided_impossibility_finder o =
         M.filter id .
         M.mapWithKey
             (\k a ->
-                 maybe True (const False) $
-                 find_direction k $
-                 (all_cells (M.fromList [(k, a)]) S.\\ all_cells (no_key k))) $
+                 Mb.isNothing $
+                 find_direction
+                     k
+                     (all_cells (M.fromList [(k, a)]) S.\\ all_cells (no_key k))) $
         deps
 
 --------------------------------------------------
 no_options :: Orixo -> S.Set Cell
 no_options o@(Orixo _ ic) =
     let deps = dependencies o
-        --undefined
      in M.keysSet .
         M.filter M.null .
         M.mapWithKey (\c mdsc -> M.filter (\sc -> S.size sc >= ic M.! c) mdsc) $
@@ -157,7 +158,6 @@ no_options o@(Orixo _ ic) =
 --                              different directions (DONE)
 --
 -- no_options : it's impossible to slide the starter in any direction (DONE)
--- 
 -- 
 solve :: Orixo -> Maybe Solution
 solve o@(Orixo wm ic)
