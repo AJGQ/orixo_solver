@@ -15,12 +15,28 @@ sortCells d lc =
         L -> L.sortOn (negate . fst) lc
         R -> L.sortOn fst lc
 
-swipe :: Cell -> Direction -> Orixo -> Orixo
+swipe :: Cell -> Direction -> Orixo -> Maybe Orixo
 swipe c d o@(Orixo wm ic oc) =
-    let msc =
+    let sc =
             S.fromList . take (ic M.! c) . sortCells d . S.toList . (M.! d) $
             dependencies o M.! c
-     in Orixo wm (M.delete c ic) . S.union (S.insert c oc) $ msc
+     in if S.size sc < ic M.! c
+            then Nothing
+            else Just . Orixo wm (M.delete c ic) . S.union (S.insert c oc) $ sc
 
-swipes :: [(Cell, Direction)] -> Orixo -> Orixo
-swipes l o = foldr (uncurry swipe) o l
+swipes :: [(Cell, Direction)] -> Orixo -> Maybe Orixo
+swipes l o = foldr (\(c, d) mo -> (>>= id) (swipe c d <$> mo)) (Just o) l
+
+auto_single_dependent :: Orixo -> Orixo
+auto_single_dependent o =
+    let mcmd = obligated_finder o
+     in if mcmd == M.empty
+            then o
+            else auto_single_dependent $
+                 M.foldrWithKey
+                     (\c md oo ->
+                          case md of
+                              Nothing -> oo
+                              Just d -> maybe oo id $ swipe c d oo)
+                     o
+                     mcmd
